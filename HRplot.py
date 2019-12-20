@@ -18,7 +18,13 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import VotingClassifier
 
 # Sandbox switch('False' for actual data processing)
-sandbox_switch = 'False'
+sandbox_switch = False
+replace_pattern = {"[":"", "]":"", ",":"", "'":""}
+
+def replace_all(text, dic):
+  for i, j in dic.items(): # items()
+          text = text.replace(i, j)
+  return text
 
 # Import data
 cwd = os.getcwd()
@@ -29,27 +35,31 @@ for i in range(10,50):
     initmass.append(i)
 if os.path.exists("HRplot_ledoux.data"):
   os.remove("HRplot_ledoux.data")
+
+# write header
 w = open("HRplot_ledoux.data", 'w')
 w.write("M_init H_env_init H_env_fin M_fin R_fin L_fin Teff_fin g sL_fin He_core C_core mH mHe Si_core Fe_core\n")
+# write data
 for i in initmass:
   f = open(cwd+'/'+str(i)+"/Minit_"+str(i)+"Msun_Ledoux.dat", 'r')
-  w = open("HRplot_ledoux.data", 'a')
   fline = f.readlines()
-  for idx, val in enumerate(fline):
-    if idx > 0:
-      data_eachmass.append(val.split())
-      w.write(str(val.split())+'\n')
+  for idx, val in enumerate(fline[1:]):
+    data_eachmass.append(val.split())
+    w.write(str(val.split())+'\n')   
+  f.close()
 w.close()
-r = open("HRplot_ledoux.data", 'r')
-data = r.read().replace("[","").replace("]","").replace(",","").replace("'","")
-w = open("HRplot_ledoux.data", 'w')
-w.write(data)
-w.close()
-r = open("HRplot_ledoux.data", 'r')
+
+with open("HRplot_ledoux.data", 'r') as rf:
+  data = replace_all(rf.read(), replace_pattern)
+  with open("HRplot_ledoux.data", 'w') as wf:
+    wf.write(data)
+
 data = []
-for line in r.readlines():
-  line = line.replace("[","").replace("]","").replace(",","").replace("'","")
-  data.append(line.strip().split())
+with open("HRplot_ledoux.data", 'r') as rf:
+  for line in rf.readlines():
+    line = replace_all(line.strip(), replace_pattern)
+    data.append(line.split())
+
 M_init_list = []
 M_fin_list = []
 M_fin_log_list = []
@@ -62,8 +72,8 @@ Teff_list = []
 g_list = []
 sL_fin_list = []
 C_core_list = []
-for i, idx in enumerate(data):
-  if i != 0 and float(data[i][2]) != -500 and float(data[i][13]) > 0 and float(data[i][2]) > 0:# and float(data[i][2]) < 1. and np.log10(float(data[i][5])) < 5.7:
+for i, idx in enumerate(data[1:]):
+  if float(data[i][2]) != -500 and float(data[i][13]) > 0 and float(data[i][2]) > 0:# and float(data[i][2]) < 1. and np.log10(float(data[i][5])) < 5.7:
     M_init_list.append(float(data[i][0]))
     H_env_fin_list.append(float(data[i][2]))
     H_env_fin_log_list.append(np.log10(float(data[i][2])))
@@ -109,7 +119,7 @@ print(len(Z1))
 #Zi1 = rbf(Xi1, Yi1)
 
 # Select decision boundary plotting method: 1
-if sandbox_switch != 'True':
+if sandbox_switch is False:
   prc1 = Perceptron(tol = 1e-3, penalty = 'elasticnet')
   prc1.fit(XY1,Z1)
   tree1 = DecisionTreeClassifier(splitter = 'best', criterion = 'entropy')
@@ -144,7 +154,7 @@ if sandbox_switch != 'True':
   ZZ2 = ZZ2.reshape(XX2.shape)
 
 # Select decision boundary - sandbox playground
-if sandbox_switch == 'True':
+if sandbox_switch is True:
   XY3 = [[0 for x in range(2)] for y in range(len(M_init_list))]
   for i, idx in enumerate(M_init_list):
     XY3[i][0] = H_env_fin_list[i]
@@ -169,7 +179,7 @@ if sandbox_switch == 'True':
   ZZ3 = ZZ3.reshape(XX3.shape)
 
 # Draw figures: HRD
-if sandbox_switch != 'True':
+if sandbox_switch is False:
   plt.figure(figsize=(18, 16))
   plt.suptitle("Z = 0.02 (solar)", fontsize = 16, y=0.02)
   plt.tight_layout()
@@ -257,7 +267,7 @@ plt.savefig("HRplot_LT.png", facecolor = 'snow', edgecolor = 'k', format = 'png'
 plt.show()
 
 # Draw figures: Sandbox
-if sandbox_switch == 'True':
+if sandbox_switch is True:
   plt.figure(figsize=(12, 7))
   plt.subplot(121)
   plt.tricontourf(X3, Y3, Z3, np.unique(Z1), cmap = matplotlib.cm.jet_r)
