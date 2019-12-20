@@ -41,20 +41,14 @@ for i in initmass:
       w.write(str(val.split())+'\n')
 w.close()
 r = open("HRplot_ledoux.data", 'r')
-data = r.read().replace("[","")
-data = data.replace("]","")
-data = data.replace(",","")
-data = data.replace("'","")
+data = r.read().replace("[","").replace("]","").replace(",","").replace("'","")
 w = open("HRplot_ledoux.data", 'w')
 w.write(data)
 w.close()
 r = open("HRplot_ledoux.data", 'r')
 data = []
 for line in r.readlines():
-  line = line.replace("[","")
-  line = line.replace("]","")
-  line = line.replace(",","")
-  line = line.replace("'","")
+  line = line.replace("[","").replace("]","").replace(",","").replace("'","")
   data.append(line.strip().split())
 M_init_list = []
 M_fin_list = []
